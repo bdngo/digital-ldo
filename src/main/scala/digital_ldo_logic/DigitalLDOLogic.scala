@@ -1,20 +1,23 @@
-package DigitalLDOLogic
+package digital_ldo_logic
 
 import chisel3._
+import chisel3.util.Cat
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
 import _root_.circt.stage.ChiselStage
-import chisel3.util.HasBlackBoxResource
 
-class DigitalLDOLogic(pfetWidth: Int) extends Module {
+class DigitalLDOLogic(numPFET: Int) extends Module {
   val io = IO(new Bundle {
     val in = Input(Bool())
-    val inb = Input(Bool())
-    val out = Output(UInt(pfetWidth.W))
+    val out = Output(UInt(numPFET.W))
   })
 
-  val lastVoltage = RegInit(~0.U(io.out.getWidth.W))
+  val lastVoltage = RegInit(~(0.U(numPFET.W)))
 
-  lastVoltage := ~(lastVoltage + io.in.asUInt - io.inb.asUInt)
+  when (io.in) {
+    lastVoltage := Cat(lastVoltage(numPFET - 2, 0), 1.U)
+  }.otherwise {
+    lastVoltage := Cat(0.U, lastVoltage(numPFET - 1, 1))
+  }
   io.out := lastVoltage
 }
 
