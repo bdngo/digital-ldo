@@ -3,18 +3,18 @@ module DigitalLDOLogic(
   input        clock,
                reset,
                io_in,
-  output [3:0] io_out
+  output [5:0] io_out
 );
 
-  reg [3:0] lastVoltage;
+  reg [5:0] pFETMask;
   always @(posedge clock) begin
     if (reset)
-      lastVoltage <= 4'hF;
-    else if (io_in)
-      lastVoltage <= {lastVoltage[2:0], 1'h1};
-    else
-      lastVoltage <= {1'h0, lastVoltage[3:1]};
+      pFETMask <= 6'h0;
+    else if (io_in & pFETMask != 6'h3F)
+      pFETMask <= pFETMask + 6'h1;
+    else if (~io_in & (|pFETMask))
+      pFETMask <= pFETMask - 6'h1;
   end // always @(posedge)
-  assign io_out = lastVoltage;
+  assign io_out = ~pFETMask;
 endmodule
 
